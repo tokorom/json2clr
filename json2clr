@@ -1,5 +1,183 @@
 #!/usr/bin/env xcrun swift
+// vim: ft=swift
 
 import Foundation
+import AppKit
 
-println("hello")
+// MARK: - usage
+
+let usage = "json2clr [-n <string>] [-i <path>] [-o <path>]"
+
+let options = [
+    "-n": "palette name",
+    "-i": "input json file path",
+    "-o": "output clr file path",
+]
+
+// MARK: - functions
+
+func printUsage() {
+    println("Usage: \(usage)\n")
+    println("Options:")
+    for (option, description) in options {
+        println("\t\(option)\t\(description)")
+    }
+}
+
+// MARK: - classes
+
+class Color {
+
+    var name: String?
+    var color: NSColor?
+
+    init?(dictionary: NSDictionary) {
+        var name: String?
+        var color: NSColor?
+
+        name = dictionary["name"] as? String
+
+        if let hex = dictionary["hex"] as? String {
+            color = Color.colorFromHexString(hex)
+        } else {
+            let red = dictionary["r"] as? String
+            let green = dictionary["g"] as? String
+            let blue = dictionary["b"] as? String
+            let alpha = dictionary["a"] as? String
+            color = Color.colorFromStrings(red: red, green: green, blue: blue, alpha: alpha)
+        }
+
+        if nil == name || nil == color {
+            return nil
+        } else {
+            self.name = name
+            self.color = color
+        }
+    }
+
+    class func colorFromHexString(value: String) -> NSColor? {
+        var red: CGFloat = 0.0
+        var green: CGFloat = 0.0
+        var blue: CGFloat = 0.0
+        var alpha: CGFloat = 1.0
+        let characters = Array(value.utf8)
+        if 6 <= characters.count {
+            red = Color.colorValue(characters[0], characters[1])
+            green = Color.colorValue(characters[2], characters[3])
+            blue = Color.colorValue(characters[4], characters[5])
+        }
+        if 8 <= characters.count {
+            alpha = Color.colorValue(characters[6], characters[7])
+        }
+        return NSColor(red: red, green: green, blue: blue, alpha: alpha)
+    }
+
+    class func colorValue(code1: UInt8, _ code2: UInt8) -> CGFloat {
+        let k1 = Color.floatValueForCharacter(code1)
+        let k2 = Color.floatValueForCharacter(code2)
+        let value: CGFloat = CGFloat(k1) * 16.0 + CGFloat(k2)
+        return CGFloat(value / 255.0)
+    }
+
+    class func floatValueForCharacter(code: UInt8) -> Int {
+        switch code {
+        case Array("0".utf8)[0]...Array("9".utf8)[0]: return code - Array("0".utf8)[0]
+        case Array("a".utf8)[0]...Array("z".utf8)[0]: return (code - Array("a".utf8)[0]) + 10
+        case Array("A".utf8)[0]...Array("Z".utf8)[0]: return (code - Array("A".utf8)[0]) + 10
+        default: return 0
+        }
+    }
+
+    class func colorFromStrings(#red: String?, green: String?, blue: String?, alpha: String?) -> NSColor? {
+        var r = Color.floatValueFromString(red) ?? 0.0
+        var g = Color.floatValueFromString(green) ?? 0.0
+        var b = Color.floatValueFromString(blue) ?? 0.0
+        var a = Color.floatValueFromString(alpha) ?? 1.0
+        return NSColor(red: r, green: g, blue: b, alpha: a)
+    }
+
+    class func floatValueFromString(value: String?) -> CGFloat? {
+        if let string = value {
+            if let integer = string.toInt() {
+                return CGFloat(integer) / 255.0
+            } else {
+                return CGFloat((string as NSString).doubleValue)
+            }
+        }
+        return nil
+    }
+
+}
+
+// MARK: - options
+
+var paletteName: String!
+var inputPath: String!
+var outputPath: String!
+
+let arguments = Process.arguments
+for i in 0..<arguments.count {
+    let argument = arguments[i]
+    switch argument {
+    case "-n":
+        paletteName = (i + 1 < arguments.count) ? arguments[i + 1] : nil
+    case "-i":
+        inputPath = (i + 1 < arguments.count) ? arguments[i + 1] : nil
+    case "-o":
+        outputPath = (i + 1 < arguments.count) ? arguments[i + 1] : nil
+    default:
+        break
+    }
+}
+
+if nil == inputPath {
+    printUsage()
+    exit(0)
+}
+
+if nil == paletteName {
+    paletteName = "New"
+}
+
+// MARK: - main
+
+let jsonData: NSData! = NSData.dataWithContentsOfMappedFile(inputPath) as? NSData
+if nil == jsonData {
+    println("\(inputPath) was not found.")
+    exit(-1)
+}
+
+var error: NSError?
+let colorDicts: NSArray! = NSJSONSerialization.JSONObjectWithData(jsonData, options: NSJSONReadingOptions.AllowFragments, error: &error) as? NSArray
+
+if nil == colorDicts {
+    println("Error: \(error)")
+    exit(-1)
+}
+
+var colors = [Color]()
+for dict in colorDicts as [NSDictionary] {
+    if let color = Color(dictionary: dict) {
+        colors.append(color)
+    }
+}
+
+let colorList = NSColorList(name: paletteName)
+
+for color in colors {
+    if let clr = color.color {
+        colorList.setColor(clr, forKey: color.name ?? "New")
+    }
+}
+println("# \(colorList)")
+
+if nil == outputPath {
+    outputPath = "~/Library/Colors/\(paletteName).clr"
+}
+
+let filePath = (outputPath as NSString).stringByExpandingTildeInPath
+if colorList.writeToFile(filePath) {
+    println("SUCCESS: saved to \(filePath)")
+} else {
+    println("FAILED: failed to save to \(filePath)")
+}
