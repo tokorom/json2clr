@@ -70,8 +70,8 @@ if let colorList = NSColorList(name: paletteName, fromFile: inputPath) {
             var colorDict = [String : String]()
             colorDict["name"] = key
             colorDict["r"] = NSString(format: "%f", Double(color.redComponent))
-            colorDict["g"] = NSString(format: "%f", Double(color.blueComponent))
-            colorDict["b"] = NSString(format: "%f", Double(color.greenComponent))
+            colorDict["g"] = NSString(format: "%f", Double(color.greenComponent))
+            colorDict["b"] = NSString(format: "%f", Double(color.blueComponent))
             colorDict["a"] = NSString(format: "%f", Double(color.alphaComponent))
             dicts.append(colorDict)
         }

@@ -11,4 +11,11 @@ more result2.json
 
 echo '===================================='
 
-diff result.json result2.json
+ret=`diff result.json result2.json`
+
+if [ -z "$ret" ]; then
+  echo "SUCCESS!"
+else
+  echo "$ret"
+  echo "FAILED...!"
+fi
