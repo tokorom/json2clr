@@ -6,7 +6,7 @@ import AppKit
 
 // MARK: - usage
 
-let usage = "clr2json [-n <string>] [-i <path>] [-o <path>]"
+let usage = "clr2json [-i <path>] [-o <path>]"
 
 let options = [
     "-n": "palette name",
@@ -26,7 +26,6 @@ func printUsage() {
 
 // MARK: - options
 
-var paletteName: String!
 var inputPath: String!
 var outputPath: String!
 
@@ -34,8 +33,6 @@ let arguments = Process.arguments
 for i in 0..<arguments.count {
     let argument = arguments[i]
     switch argument {
-    case "-n":
-        paletteName = (i + 1 < arguments.count) ? arguments[i + 1] : nil
     case "-i":
         inputPath = (i + 1 < arguments.count) ? arguments[i + 1] : nil
     case "-o":
@@ -50,17 +47,13 @@ if nil == inputPath {
     exit(0)
 }
 
-if nil == paletteName {
-    paletteName = "New"
-}
-
 if nil == outputPath {
-    outputPath = "\(paletteName).json"
+    outputPath = "New.json"
 }
 
 // MARK: - main
 
-if let colorList = NSColorList(name: paletteName, fromFile: inputPath) {
+if let colorList = NSColorList(name: "x", fromFile: inputPath) {
 
     var dicts = [[String : String]]()
 
