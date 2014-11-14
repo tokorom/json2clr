@@ -23,7 +23,7 @@ $ json2clr -n PalleteName -i input.json -o output.clr
 
 # clr2json
 
-Create color palette file (.clr) from JSON
+Create color JSON file from color palette (.clr)
 
 ## Usage
 
