@@ -29,7 +29,7 @@ func printUsage() {
 var inputPath: String!
 var outputPath: String!
 
-let arguments = Process.arguments
+let arguments = CommandLine.arguments
 for i in 0..<arguments.count {
     let argument = arguments[i]
     switch argument {
@@ -59,7 +59,7 @@ if let colorList = NSColorList(name: "x", fromFile: inputPath) {
     
     let keys = colorList.allKeys as [String]
     for key in keys {
-        if let color = colorList.colorWithKey(key) {
+        if let color = colorList.color(withKey:key) {
             var colorDict = [String : String]()
             colorDict["name"] = key
             colorDict["r"] = String(format: "%f", Double(color.redComponent))
@@ -70,13 +70,9 @@ if let colorList = NSColorList(name: "x", fromFile: inputPath) {
         }
     }
     
-    if let jsonData = try? NSJSONSerialization.dataWithJSONObject(dicts, options: .PrettyPrinted) {
-        let filePath = (outputPath as NSString).stringByExpandingTildeInPath
-        if jsonData.writeToFile(filePath, atomically: true) {
-            print("SUCCESS: saved to \(filePath)")
-        } else {
-            print("FAILED: failed to save to \(filePath)")
-        }
+	if let jsonData = try? JSONSerialization.data(withJSONObject:dicts, options: .prettyPrinted) {
+        let filePath = (outputPath as NSString).expandingTildeInPath
+		try? jsonData.write(to:NSURL.fileURL(withPath:filePath), options:NSData.WritingOptions.atomic);
     }
     
 }
