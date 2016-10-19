@@ -66,10 +66,19 @@ if let colorList = NSColorList(name: "x", fromFile: inputPath) {
             colorDict["g"] = String(format: "%f", Double(color.greenComponent))
             colorDict["b"] = String(format: "%f", Double(color.blueComponent))
             colorDict["a"] = String(format: "%f", Double(color.alphaComponent))
-            dicts.append(colorDict)
+			dicts.append(colorDict);
+
+            var output_key = key.replacingOccurrences(of: " ", with: "").lowercased();
+			print("const color_t \(output_key) = {\(Int(255 * Double(color.redComponent))), \(Int(255 * Double(color.greenComponent))), \(Int(255 * Double(color.blueComponent)))};");
+
+
         }
     }
-    
+    for key in keys {
+        var output_key = key.replacingOccurrences(of: " ", with: "").lowercased();
+        print("\(output_key), ", terminator: "");
+    }
+
 	if let jsonData = try? JSONSerialization.data(withJSONObject:dicts, options: .prettyPrinted) {
         let filePath = (outputPath as NSString).expandingTildeInPath
 		try? jsonData.write(to:NSURL.fileURL(withPath:filePath), options:NSData.WritingOptions.atomic);
